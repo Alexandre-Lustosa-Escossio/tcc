@@ -1,4 +1,4 @@
-from numpy import True_, cos, pi, sin, sqrt
+from numpy import True_, cos, pi, sin, sqrt, exp
 import streamlit as st
 import time
 @st.cache(suppress_st_warning=True)
@@ -26,9 +26,21 @@ def calcula_fator_geometria(tipo_engrenagem,tipo_engrenamento,raio_pinhao,passo_
         raio_curvatura1_eng2 = sqrt((0.5*((raio_interm+coef_adendo_interm)+(raio_interm-coef_adendo_eng))**2)-raio_pinhao*cos(ang_pressao*pi/180)**2)
         raio_curvatura2_eng2 = (raio_interm+raio_eng)*sin(ang_pressao*pi/180) - raio_curvatura1_eng2
         
-def calcula_resistencias():
-
-
+def calcula_resistencias(dentes_pinhao,dentes_interm,dentes_eng):
+    fator_kl = st.number_input('Forneça o valor de Kl')
+    fator_kt = (st.number_input('Forneça a temperatura de operação em Fahrenheit') + 460)/620
+    fator_kr = st.selectbox('Selecione o fator Kr' , [0.85,1.00,1.25,1.50])
+    resistencia_fadiga_teorica = st.number_input('Forneça a resistência à fadiga teórica')
+    resistencia_fadiga = (resistencia_fadiga_teorica*fator_kl)/(fator_kr*fator_kt)
+    st.metric('Resistência à fadiga corrigida',resistencia_fadiga)
+    fator_cl = st.number_input('Forneça o valor de Cl')
+    fator_ch = 1
+    try:
+        resistencia_superficial_teorica = st.number_input('Forneça a resistência à fadiga superficial teórica')
+        resistencia_superficial = (resistencia_superficial_teorica*fator_cl*fator_ch)/(fator_kt*fator_kr)
+        st.metric('Resistência à Fadiga de Superfícial', resistencia_superficial)
+    except:
+        pass
 
 def calcula_esforcos(tipo_engrenagem,tipo_engrenamento):
     st.markdown("<h1 text-align:center;>Calculo das tensões de um trem de engrenagens</h1>",True)        
@@ -162,15 +174,17 @@ def calcula_esforcos(tipo_engrenagem,tipo_engrenamento):
                     st.metric("P2", raio_curvatura2_eng2)
                     st.metric('Iig', fator_geom_sup_eng2)
                     st.metric('Sigmaci', tensao_superficie_eng2)
-                calcula_resistencias(tensao_superficie_eng1,tensao_superficie_eng2)
+                calcula_resistencias(dentes_pinhao,dentes_interm,dentes_eng)
+            
 
 def main():
     tipo_engrenagem = st.sidebar.selectbox('Selecione o tipo de engrenagem',('Dentes Retos', 'Dentes Helicoidais'))
     if tipo_engrenagem == 'Dentes Retos':
         tipo_engrenamento = st.sidebar.selectbox('Selecione o tipo de engrenamento',('Trem Simples','Trem Composto'))
-        app(tipo_engrenagem,tipo_engrenamento)
     if tipo_engrenagem == 'Dentes Helicoidais':
         tipo_engrenamento == 'Trem Simples'
-        app(tipo_engrenagem,tipo_engrenamento)
+
+    calcula_esforcos(tipo_engrenagem,tipo_engrenamento)
+
 if __name__ == "__main__":
     main()
