@@ -113,7 +113,7 @@ def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
     st.markdown("<h1 text-align:center;>Calculo das tensões de um trem de engrenagens</h1>",True)        
     c1,c2,c3 = st.columns([1,1,1])
     with c2:
-        st.image('/home/alexandreescossio/Pictures/trem-engrenagem-simples.png')
+        st.image('trem-engrenagem-simples.png')
     col1, col2 = st.columns(2)
     with col1:
         st.subheader('Tensão de flexão:')
@@ -259,7 +259,7 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
     st.markdown("<h1 text-align:center;>Calculo das tensões de um trem de engrenagens</h1>",True)        
     c1,c2,c3 = st.columns([1,1,1])
     with c2:
-        st.image('/home/alexandreescossio/Pictures/trem-engrenagem-composto.png')
+        st.image('trem-engrenagem-composto.png')
     col1, col2 = st.columns(2)
     with col1:
         st.subheader('Tensão de flexão:')
