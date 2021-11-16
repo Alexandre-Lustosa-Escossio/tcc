@@ -1,4 +1,4 @@
-from numpy import True_, cos, pi, sin, sqrt, exp
+from numpy import True_, arctan, cos, pi, sin, sqrt, exp, tan
 import streamlit as st
 import time
 @st.cache(suppress_st_warning=True)
@@ -21,60 +21,63 @@ def calcula_fator_geometria_simples(tipo_engrenagem,tipo_engrenamento,raio_pinha
         return raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2
     elif tipo_engrenagem == 'Dentes Helicoidais':
         coef_adendo_eng = st.number_input('Insira o valor do Coeficiente de Adendo da Engrenagem')
-        fator_mp = st.number_input('Insira o valor da Razão de contato transversal')
-        fator_mf = st.number_input('Insira o valor da Razão de contato axial')
-        fator_nr = fator_mp%1
+        angulo_helice = st.number_input('Insira o valor do Ângulo de hélice')
+        fator_z_pi = sqrt((raio_pinhao+coef_adendo_pinhao)**2 - (raio_pinhao*cos(ang_pressao*pi/180))) + sqrt((raio_interm+coef_adendo_interm)**2 - (raio_interm*cos(ang_pressao*pi/180)**2)) - (raio_pinhao+raio_interm)*sin(ang_pressao*pi/180)
+        fator_z_ig= sqrt((raio_pinhao+coef_adendo_pinhao)**2 - (raio_pinhao*cos(ang_pressao*pi/180))) + sqrt((raio_eng+coef_adendo_eng)**2 - (raio_eng*cos(ang_pressao*pi/180)**2)) - (raio_interm+raio_eng)*sin(ang_pressao*pi/180)
+        fator_mp_pi = passo_diametral*fator_z_pi/(pi*cos(ang_pressao*pi/180))
+        fator_mp_ig = passo_diametral*fator_z_ig/(pi*cos(ang_pressao*pi/180))
+        fator_mf = larg_face*passo_diametral*tan(angulo_helice*pi/180)/pi
+        fator_nr_pi = fator_mp_pi%1
+        fator_nr_ig = fator_mp_ig%1
         fator_na = fator_mf%1
-        passo_axial = st.number_input('Insira o valor do Passo axial')
-        angulo_helice_base = st.number_input('Insira o valor do Ângulo de hélice de base')
-        if(fator_na < (1-fator_nr)):
-            l_min = (fator_mp*larg_face-fator_na*fator_nr*passo_axial)/cos(angulo_helice_base*pi/180)
+        passo_axial = pi*cos(angulo_helice*pi/180)/(passo_diametral*sin(angulo_helice*pi/180))
+        ang_pressao_normal = arctan(cos(angulo_helice*pi/180)*tan(angulo_helice*pi/180))
+        angulo_helice_base = arctan(cos (angulo_helice*pi/180)*(cos (ang_pressao_normal)/cos(ang_pressao*pi/180)))
+        if(fator_na < (1-fator_nr_pi)):
+            l_min_pi = (fator_mp_pi*larg_face-fator_na*fator_nr_pi*passo_axial)/cos(angulo_helice_base*pi/180)
         else:
-            l_min = (fator_mp*larg_face-(((1-fator_na)*(1-fator_nr))*passo_axial))/cos(angulo_helice_base*pi/180)
-        fator_mn = larg_face/l_min
-        raio_curvatura1_eng1 = sqrt((0.5*((raio_pinhao+coef_adendo_pinhao)+(raio_pinhao-coef_adendo_interm))**2)-raio_pinhao*cos(ang_pressao*pi/180)**2)
-        raio_curvatura2_eng1 = (raio_pinhao+raio_interm)*sin(ang_pressao*pi/180) - raio_pinhao
-        raio_curvatura1_eng2 = sqrt((0.5*((raio_interm+coef_adendo_interm)+(raio_interm-coef_adendo_eng))**2)-raio_pinhao*cos(ang_pressao*pi/180)**2)
-        raio_curvatura2_eng2 = (raio_interm+raio_eng)*sin(ang_pressao*pi/180) - raio_curvatura1_eng2
-        fator_geom_sup_eng1 =  cos(ang_pressao*pi/180)/((1/raio_curvatura1_eng1 + 1/raio_curvatura2_eng1)*diametro_ref_pinhao*fator_mn)
-        fator_geom_sup_eng2 =  cos(ang_pressao*pi/180)/((1/raio_curvatura2_eng1 + 1/raio_curvatura2_eng2)*2*raio_interm*fator_mn)
-        return raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2
+            l_min_pi = (fator_mp_pi*larg_face-(((1-fator_na)*(1-fator_nr_pi))*passo_axial))/cos(angulo_helice_base*pi/180)
+        if(fator_na < (1-fator_nr_ig)):
+            l_min_ig = (fator_mp_ig*larg_face-fator_na*fator_nr_ig*passo_axial)/cos(angulo_helice_base*pi/180)
+        else:
+            l_min_ig = (fator_mp_ig*larg_face-(((1-fator_na)*(1-fator_nr_ig))*passo_axial))/cos(angulo_helice_base*pi/180)
+        fator_mn_pi = larg_face/l_min_pi
+        fator_mn_ig = larg_face/l_min_ig
+        if angulo_helice!=0:
+            raio_curvatura1_eng1 = sqrt((0.5*((raio_pinhao+coef_adendo_pinhao)+(raio_pinhao-coef_adendo_interm))**2)-raio_pinhao*cos(ang_pressao*pi/180)**2)
+            raio_curvatura2_eng1 = (raio_pinhao+raio_interm)*sin(ang_pressao*pi/180) - raio_pinhao
+            raio_curvatura1_eng2 = sqrt((0.5*((raio_interm+coef_adendo_interm)+(raio_interm-coef_adendo_eng))**2)-raio_pinhao*cos(ang_pressao*pi/180)**2)
+            raio_curvatura2_eng2 = (raio_interm+raio_eng)*sin(ang_pressao*pi/180) - raio_curvatura1_eng2
+            fator_geom_sup_eng1 =  cos(ang_pressao*pi/180)/((1/raio_curvatura1_eng1 + 1/raio_curvatura2_eng1)*diametro_ref_pinhao*fator_mn_pi)
+            fator_geom_sup_eng2 =  cos(ang_pressao*pi/180)/((1/raio_curvatura2_eng1 + 1/raio_curvatura2_eng2)*2*raio_interm*fator_mn_ig)
+            return raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2
 
-def calcula_fator_geometria_composto(tipo_engrenagem,raio_pinhao_1,passo_diametral_1,raio_movida_1,diametro_ref_pinhao_1,larg_face_1,raio_pinhao_2,passo_diametral_2,raio_movida_2,diametro_ref_pinhao_2,larg_face_2):
+def calcula_fator_geometria_composto(tipo_engrenagem,diametros_ref,passo_diametral,larg_face):
     ang_pressao = st.number_input('Insira o valor do ângulo de pressão')
-    coef_adendo_pinhao_1 = st.number_input('Insira o valor do Coeficiente de Adendo do Pinhão 1')
-    coef_adendo_pinhao_2 = st.number_input('Insira o valor do Coeficiente de Adendo do Pinhão 2')
+    coef_adendo_pinhao = st.number_input('Insira o valor do Coeficiente de Adendo do Pinhão')
     if tipo_engrenagem == 'Dentes Retos':
-        raio_curvatura1_eng1 = sqrt((raio_pinhao_1+((1+coef_adendo_pinhao_1)/passo_diametral_1))**2 - (raio_pinhao_1*cos(ang_pressao*pi/180))**2) - (pi/6)*cos(ang_pressao*pi/180)
-        raio_curvatura2_eng1 = (raio_pinhao_1+raio_movida_1)*sin(ang_pressao*pi/180)-raio_curvatura1_eng1
-        raio_curvatura1_eng2 = sqrt((raio_pinhao_2+((1+coef_adendo_pinhao_2)/passo_diametral_2))**2 - (raio_pinhao_2*cos(ang_pressao*pi/180))**2) - (pi/6)*cos(ang_pressao*pi/180)
-        raio_curvatura2_eng2 = (raio_pinhao_2+raio_movida_2)*sin(ang_pressao*pi/180)-raio_curvatura1_eng2
-        fator_geom_sup_eng1 =  cos(ang_pressao*pi/180)/((1/raio_curvatura1_eng1 + 1/raio_curvatura2_eng1)*diametro_ref_pinhao_1)
-        fator_geom_sup_eng2 =  cos(ang_pressao*pi/180)/((1/raio_curvatura2_eng1 + 1/raio_curvatura2_eng2)*diametro_ref_pinhao_2)
-        return raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2
+        raio_curvatura_pinhao = sqrt((diametros_ref[0]/2+((1+coef_adendo_pinhao)/passo_diametral))**2 - (diametros_ref[0]/2*cos(ang_pressao*pi/180))**2) - (pi/6)*cos(ang_pressao*pi/180)
+        raio_curvatura_eng = (diametros_ref[0]/2+diametros_ref[1]/2)*sin(ang_pressao*pi/180)-raio_curvatura_pinhao
+        fator_geom_sup =  cos(ang_pressao*pi/180)/((1/raio_curvatura_pinhao + 1/raio_curvatura_eng)*diametros_ref[0])
+        return raio_curvatura_pinhao,raio_curvatura_eng,fator_geom_sup
     elif tipo_engrenagem == 'Dentes Helicoidais':
-        coef_adendo_movidas = st.number_input('Insira o valor do Coeficiente de Adendo das Engrenagens Movidas')
+        coef_adendo_eng = st.number_input('Insira o valor do Coeficiente de Adendo das Engrenagens Movidas')
         fator_mp = st.number_input('Insira o valor da Razão de contato transversal')
         fator_mf = st.number_input('Insira o valor da Razão de contato axial')
         fator_nr = fator_mp%1
         fator_na = fator_mf%1
         passo_axial = st.number_input('Insira o valor do Passo axial')
         angulo_helice_base = st.number_input('Insira o valor do Ângulo de hélice de base')
-        if(fator_na < (1-fator_nr)):
-            l_min_1 = (fator_mp*larg_face_1-fator_na*fator_nr*passo_axial)/cos(angulo_helice_base*pi/180)
-            l_min_2 = (fator_mp*larg_face_2-fator_na*fator_nr*passo_axial)/cos(angulo_helice_base*pi/180)
-        else:
-            l_min_1 = (fator_mp*larg_face_1-(((1-fator_na)*(1-fator_nr))*passo_axial))/cos(angulo_helice_base*pi/180)
-            l_min_2 = (fator_mp*larg_face_2-(((1-fator_na)*(1-fator_nr))*passo_axial))/cos(angulo_helice_base*pi/180)
-        fator_mn_1 = larg_face_1/l_min_1
-        fator_mn_2 = larg_face_2/l_min_2
-        raio_curvatura1_eng1 = sqrt((0.5*((raio_pinhao_1+coef_adendo_pinhao_1)+(raio_pinhao_1-coef_adendo_movidas))**2)-raio_pinhao_1*cos(ang_pressao*pi/180)**2)
-        raio_curvatura2_eng1 = (raio_pinhao_1+raio_movida_1)*sin(ang_pressao*pi/180) - raio_pinhao_1
-        raio_curvatura1_eng2 = sqrt((0.5*((raio_pinhao_2+coef_adendo_pinhao_2)+(raio_pinhao_2-coef_adendo_movidas))**2)-raio_pinhao_2*cos(ang_pressao*pi/180)**2)
-        raio_curvatura2_eng2 = (raio_pinhao_2+raio_movida_2)*sin(ang_pressao*pi/180) - raio_curvatura1_eng2
-        fator_geom_sup_eng1 =  cos(ang_pressao*pi/180)/((1/raio_curvatura1_eng1 + 1/raio_curvatura2_eng1)*diametro_ref_pinhao_1*fator_mn_1)
-        fator_geom_sup_eng2 =  cos(ang_pressao*pi/180)/((1/raio_curvatura2_eng1 + 1/raio_curvatura2_eng2)*2*raio_pinhao_2*fator_mn_2)
-        return raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2
+        if fator_mp != 0 and fator_mf != 0 and passo_axial!= 0 and angulo_helice_base !=0:
+            if(fator_na < (1-fator_nr)):
+                l_min = (fator_mp*larg_face-fator_na*fator_nr*passo_axial)/cos(angulo_helice_base*pi/180)
+            else:
+                l_min = (fator_mp*larg_face-(((1-fator_na)*(1-fator_nr))*passo_axial))/cos(angulo_helice_base*pi/180)
+            fator_mn = larg_face/l_min
+            raio_curvatura_pinhao = sqrt((0.5*((diametros_ref[0]/2+coef_adendo_pinhao)+(diametros_ref[0]/2-coef_adendo_eng))**2)-diametros_ref[0]/2*cos(ang_pressao*pi/180)**2)
+            raio_curvatura_eng = (diametros_ref[0]/2+diametros_ref[1]/2)*sin(ang_pressao*pi/180) - diametros_ref[0]/2
+            fator_geom_sup =  cos(ang_pressao*pi/180)/((1/raio_curvatura_pinhao + 1/raio_curvatura_eng)*diametros_ref[0]*fator_mn)
+            return raio_curvatura_pinhao,raio_curvatura_eng,fator_geom_sup
 
 
 def calcula_resistencias(tensao_flexao_pinhao, tensao_flexao_interm, tensao_flexao_eng ,tensao_superficie_eng1, tensao_superficie_eng2):
@@ -106,7 +109,6 @@ def calcula_resistencias(tensao_flexao_pinhao, tensao_flexao_interm, tensao_flex
         fator_seguranca_superficie_eng2 = resistencia_superficial/tensao_superficie_eng2
         st.metric("Fator de Segurança de Superfície do 1º Engrenamento", round(fator_seguranca_superficie_eng1,2))
         st.metric("Fator de Segurança de Superfície do 2º Engrenamento", round(fator_seguranca_superficie_eng2,2))
-
     
 
 def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
@@ -136,7 +138,7 @@ def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
         dentes_eng = st.number_input('Quantidade de Dentes da Engrenagem',step=1)    
     if passo_diametral !=0 and dentes_pinhao !=0 and dentes_interm !=0 and dentes_eng !=0:
         diametro_ref_pinhao = dentes_pinhao/passo_diametral 
-        larg_face = 12/passo_diametral #inches
+        larg_face = st.number_input('Insira o valor da largura de face',step=.001,format='%.3f') #inches
         diametro_ref_interm = dentes_interm/passo_diametral
         diametro_ref_eng = dentes_eng/passo_diametral
         c1,c2,c3,c4,c5,c6 = st.columns([1,2,1,2,1,2])
@@ -177,83 +179,85 @@ def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
             fator_tamanho = st.selectbox('Selecione o valor do Fator de Tamanho Ks',
             [1.00,1.25,1.50])
             espessura_borda = st.number_input('Forneça a espessura da borda (tR), caso existente')
-        if espessura_borda > 0:
-            profundidade_dente = st.number_input('Forneça a Profundidade do dente')
-            try:
-                razao_recuo = espessura_borda/profundidade_dente
-                if razao_recuo >= 0.5 and razao_recuo <= 1.2:
-                    fator_borda = -2*razao_recuo + 3.4
-                elif razao_recuo >1.2:
-                    fator_borda = 1
-            except:
-                pass
-        else:
-            fator_borda = 1
-        fator_ciclocarga = 1
-        fator_ciclocarga_interm = 1.42
-        colu1,colu2,colu3 = st.columns(3)
-        with colu1:
-            fator_geometria_flexao_pinhao = st.number_input('Determine o fator de flexão do Pinhão (J)')
-        with colu2:
-            fator_geometria_flexao_interm = st.number_input('Determine o fator de flexão da Engrenagem Intermediária (J)')
-        with colu3:
-            fator_geometria_flexao_eng = st.number_input('Determine o fator de flexão da Engrenagem Final (J)')
-        coluna1,coluna2 = st.columns(2)
-        with coluna1:
-            carga_axial = st.number_input('Forneça a Carga Aplicada',step=.1)
-        with coluna2:
-            unidade_carga = st.radio(label = '',options=('lb','N'))
-        if unidade_carga == 'N':
-            carga_axial = carga_axial*4.448222
-        if (carga_axial !=0) and (fator_geometria_flexao_pinhao != 0) and (fator_geometria_flexao_interm != 0) and (fator_geometria_flexao_eng != 0):
-            spinner()  
-            tensao_flexao_pinhao = carga_axial*passo_diametral*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face*fator_geometria_flexao_pinhao*fator_dinamico)
-            tensao_flexao_interm = carga_axial*passo_diametral*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga_interm/(larg_face*fator_geometria_flexao_interm*fator_dinamico)
-            tensao_flexao_eng = carga_axial*passo_diametral*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face*fator_geometria_flexao_eng*fator_dinamico) 
-            st.latex(r'''
-            \sigma = \frac{W_t K_a K_m K_s K_B K_t}{FmJK_v}
-            ''')
-            c1,c2,c3 = st.columns(3)
-            with c1:
-                st.metric('Tensão de Flexão no Pinhão', round(tensao_flexao_pinhao,2))
-            with c2:    
-                st.metric('Tensão de Flexão na Intermediária',round(tensao_flexao_interm,2))
-            with c3:
-                st.metric('Tensão de Flexão na Engrenagem',round(tensao_flexao_eng,2))    
-            st.text('Calculo do Coeficiente Elástico')
-            st.latex(r'''
-                        C_p = \sqrt{\frac{1}{pi[(\frac{1-v_g²}{E_p}+\frac{(1-v_g²)}{E_g})]}}
-                        ''')
-            col1, col2 = st.columns(2)
-            with col1:
-                poisson_pinhao = float(st.number_input('Insira o Coeficiente de Poisson do pinhão'))
-                mod_elast_pinhao = float(st.number_input('Insira o Módulo de Elasticidade do pinhão (x10⁶)'))
-            with col2:    
-                poisson_eng = float(st.number_input('Insira o Coeficiente de Poisson da engrenagem') )
-                mod_elast_eng = float(st.number_input('Insira o Módulo de Elasticidade da engrenagem (x10⁶)'))
-            if poisson_eng !=0 and poisson_pinhao !=0 and mod_elast_eng != 0 and mod_elast_pinhao !=0 :
-                coef_elastico =  (1/(pi*(((1-poisson_pinhao**2)/(mod_elast_pinhao*10**6))+((1-poisson_eng**2)/(mod_elast_eng*10**6)))))**(1/2)
-                st.metric('Cp = ',round(coef_elastico,2))
-                raio_pinhao = diametro_ref_pinhao/2
-                raio_interm = (dentes_interm/passo_diametral)/2
-                raio_eng = (dentes_eng/passo_diametral)/2
-                fator_acab_superficial = 1
-                raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2 = calcula_fator_geometria_simples(tipo_engrenagem,tipo_engrenamento,raio_pinhao,passo_diametral,raio_interm,raio_eng,diametro_ref_pinhao,larg_face)
-                tensao_superficie_eng1 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng1*diametro_ref_pinhao*fator_dinamico))
-                tensao_superficie_eng2 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng2*raio_interm*2*fator_dinamico))
-                c1,c2 = st.columns(2)
-                calcula_resistencias(tensao_flexao_pinhao, tensao_flexao_interm, tensao_flexao_eng ,tensao_superficie_eng1, tensao_superficie_eng2)
+            if espessura_borda > 0:
+                profundidade_dente = st.number_input('Forneça a Profundidade do dente')
+                try:
+                    razao_recuo = espessura_borda/profundidade_dente
+                    if razao_recuo >= 0.5 and razao_recuo <= 1.2:
+                        fator_borda = -2*razao_recuo + 3.4
+                    elif razao_recuo >1.2:
+                        fator_borda = 1
+                except:
+                    pass
+            else:
+                fator_borda = 1
+            fator_ciclocarga = 1
+            fator_ciclocarga_interm = 1.42
+            colu1,colu2,colu3 = st.columns(3)
+            with colu1:
+                fator_geometria_flexao_pinhao = st.number_input('Determine o fator de flexão do Pinhão (J)')
+            with colu2:
+                fator_geometria_flexao_interm = st.number_input('Determine o fator de flexão da Engrenagem Intermediária (J)')
+            with colu3:
+                fator_geometria_flexao_eng = st.number_input('Determine o fator de flexão da Engrenagem Final (J)')
+            coluna1,coluna2 = st.columns(2)
+            with coluna1:
+                carga_axial = st.number_input('Forneça a Carga Aplicada',step=.1)
+            with coluna2:
+                unidade_carga = st.radio(label = '',options=('lb','N'))
+            if unidade_carga == 'N':
+                carga_axial = carga_axial*4.448222
+            if (carga_axial !=0) and (fator_geometria_flexao_pinhao != 0) and (fator_geometria_flexao_interm != 0) and (fator_geometria_flexao_eng != 0):
+                spinner()  
+                tensao_flexao_pinhao = carga_axial*passo_diametral*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face*fator_geometria_flexao_pinhao*fator_dinamico)
+                tensao_flexao_interm = carga_axial*passo_diametral*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga_interm/(larg_face*fator_geometria_flexao_interm*fator_dinamico)
+                tensao_flexao_eng = carga_axial*passo_diametral*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face*fator_geometria_flexao_eng*fator_dinamico) 
+                st.latex(r'''
+                \sigma = \frac{W_t K_a K_m K_s K_B K_t}{FmJK_v}
+                ''')
+                c1,c2,c3 = st.columns(3)
                 with c1:
-                    st.metric("P1 Engrenamento Pinhão-Intermediária", raio_curvatura1_eng1)
-                    st.metric("P2 Engrenamento Pinhão-Intermediária", raio_curvatura2_eng1)
-                    st.metric('Fator I Engrenamento Pinhão-Intermediária', fator_geom_sup_eng1)
-                    st.metric("Tensão de Superfície Pinhão-Intermediária", tensao_superficie_eng1)
-                with c2:
-                    st.metric("P1 Engrenamento Intermediária-Engrenagem", raio_curvatura1_eng2)
-                    st.metric("P2 Engrenamento Intermediária-Engrenagem", raio_curvatura2_eng2)
-                    st.metric('Fator I Engrenamento Intermediária-Engrenagem', fator_geom_sup_eng2)
-                    st.metric('Tensão de Superfície Intermediária-Engrenagem', tensao_superficie_eng2)
-
+                    st.metric('Tensão de Flexão no Pinhão', round(tensao_flexao_pinhao,2))
+                with c2:    
+                    st.metric('Tensão de Flexão na Intermediária',round(tensao_flexao_interm,2))
+                with c3:
+                    st.metric('Tensão de Flexão na Engrenagem',round(tensao_flexao_eng,2))    
+                st.text('Calculo do Coeficiente Elástico')
+                st.latex(r'''
+                            C_p = \sqrt{\frac{1}{pi[(\frac{1-v_g²}{E_p}+\frac{(1-v_g²)}{E_g})]}}
+                            ''')
+                col1, col2 = st.columns(2)
+                with col1:
+                    poisson_pinhao = float(st.number_input('Insira o Coeficiente de Poisson do pinhão'))
+                    mod_elast_pinhao = float(st.number_input('Insira o Módulo de Elasticidade do pinhão (x10⁶)'))
+                with col2:    
+                    poisson_eng = float(st.number_input('Insira o Coeficiente de Poisson da engrenagem') )
+                    mod_elast_eng = float(st.number_input('Insira o Módulo de Elasticidade da engrenagem (x10⁶)'))
+                if poisson_eng !=0 and poisson_pinhao !=0 and mod_elast_eng != 0 and mod_elast_pinhao !=0 :
+                    coef_elastico =  (1/(pi*(((1-poisson_pinhao**2)/(mod_elast_pinhao*10**6))+((1-poisson_eng**2)/(mod_elast_eng*10**6)))))**(1/2)
+                    st.metric('Cp = ',round(coef_elastico,2))
+                    raio_pinhao = diametro_ref_pinhao/2
+                    raio_interm = (dentes_interm/passo_diametral)/2
+                    raio_eng = (dentes_eng/passo_diametral)/2
+                    fator_acab_superficial = 1
+                    try:
+                        raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2 = calcula_fator_geometria_simples(tipo_engrenagem,tipo_engrenamento,raio_pinhao,passo_diametral,raio_interm,raio_eng,diametro_ref_pinhao,larg_face)
+                        tensao_superficie_eng1 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng1*diametro_ref_pinhao*fator_dinamico)) #Qual valor está quebrando essa equação?
+                        tensao_superficie_eng2 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng2*raio_interm*2*fator_dinamico))
+                        calcula_resistencias(tensao_flexao_pinhao, tensao_flexao_interm, tensao_flexao_eng ,tensao_superficie_eng1, tensao_superficie_eng2)
+                        c1,c2 = st.columns(2)
+                        with c1:
+                            st.metric("P1 Engrenamento Pinhão-Intermediária", raio_curvatura1_eng1)
+                            st.metric("P2 Engrenamento Pinhão-Intermediária", raio_curvatura2_eng1)
+                            st.metric('Fator I Engrenamento Pinhão-Intermediária', fator_geom_sup_eng1)
+                            st.metric("Tensão de Superfície Pinhão-Intermediária", tensao_superficie_eng1)
+                        with c2:
+                            st.metric("P1 Engrenamento Intermediária-Engrenagem", raio_curvatura1_eng2)
+                            st.metric("P2 Engrenamento Intermediária-Engrenagem", raio_curvatura2_eng2)
+                            st.metric('Fator I Engrenamento Intermediária-Engrenagem', fator_geom_sup_eng2)
+                            st.metric('Tensão de Superfície Intermediária-Engrenagem', tensao_superficie_eng2)
+                    except:
+                        pass
 
 def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
     st.markdown("<h1 text-align:center;>Calculo das tensões de um trem de engrenagens</h1>",True)        
@@ -275,62 +279,50 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
     st.subheader('Forneça os parâmetros iniciais')    
     col1, col2 = st.columns(2)
     with col1:
-        dentes_pinhao_1 = st.number_input('Quantidade de Dentes do Pinhão Número 1',step=1)
-        dentes_movida_1 = st.number_input('Quantidade de Dentes da Engrenagem Movida 1',step=1)
-        dentes_movida_2 = st.number_input('Quantidade de Dentes da Engrenagem Movida 2')
+        numero_estagios = st.number_input('Insira o número de estágios',format='%i',step=1 )
+        numero_engrenagens = 2*numero_estagios
+        razao_engrenamento = st.number_input('Determine a razão de engrenamento')
+        engrenagens = {}
     with col2:
-        passo_diametral_1 = st.number_input('Insira o valor do passo diametral Pd do Pinhão Número 1:',step=.1)
-        dentes_pinhao_2 = st.number_input('Quantidade de Dentes do Pinhão Número 2',step=1)  
-        passo_diametral_2 = st.number_input('Insira o valor do passo diametral Pd do Pinhão Número 2:',step=.1)
-    if passo_diametral_1 !=0 and dentes_pinhao_1 !=0 and dentes_pinhao_2 !=0 and passo_diametral_2 !=0:
-        diametro_ref_pinhao_1 = dentes_pinhao_1/passo_diametral_1 
-        diametro_ref_pinhao_2 = dentes_pinhao_2/passo_diametral_2
-        larg_face_1 = 12/passo_diametral_1 #inches
-        larg_face_2 = 12/passo_diametral_2
-        diametro_ref_movida_1 = dentes_movida_1/passo_diametral_1
-        diametro_ref_movida_2 = dentes_movida_2/passo_diametral_2
-        c1,c2,c3,c4,c5,c6,c7,c8 = st.columns([1,2,1,2,1,2,1,2])
-        with c1:
-            st.latex(r'''d_{p1} =''')
-        with c2:
-            st.markdown("""
-            <h3>{}</h3>
-            """.format(round(diametro_ref_pinhao_1,2)),True)
-        with c3:
-            st.latex(r'''d_{mov1} =''')
-        with c4:
-            st.markdown("""
-            <h3>{}</h3>
-            """.format(round(diametro_ref_movida_1,2)),True)
-        with c5:
-            st.latex(r'''d_{p2} =''')
-        with c6:
-            st.markdown("""
-            <h3>{}</h3>
-            """.format(round(diametro_ref_pinhao_2,2)),True)   
-        with c7:
-            st.latex(r'''d_{mov2} =''')
-        with c8:
-            st.markdown("""
-            <h3>{}</h3>
-            """.format(round(diametro_ref_movida_2,2)),True)    
-        if larg_face_1 != 0 and larg_face_2 != 0:
-            vel_pinhao_1 = st.number_input('Velocidade angular do pinhão em RPM',step=.5)
-            fator_aplicacao = st.selectbox('Selecione o Fator de Aplicação KA',
-            [1.00,1.25,1.5,1.75,2.00,2.25])
-            fator_distribuicao = st.selectbox('Selecione o Fator de Distribuição de Carga KM',
-            [1.6,1.7,1.8,2.0])
-            indice_qualidade = st.number_input('Insira o valor do índice de qualidade Qv',step=.1)
-            vel_pinhao_2 = vel_pinhao_1 * (dentes_pinhao_1/dentes_movida_1)
-            vel_linha_ref_pinhao_1 = diametro_ref_pinhao_1*vel_pinhao_1*2*pi/(2*12)
-            vel_linha_ref_pinhao_2 = diametro_ref_pinhao_2*vel_pinhao_2*2*pi/(2*12)
-            B = ((12-indice_qualidade)**(2/3))/4
-            A = 50+56*(1-B)
-            fator_dinamico_1 = (A/(A+vel_linha_ref_pinhao_1**(1/2)))**B
-            fator_dinamico_2 = (A/(A+vel_linha_ref_pinhao_2**(1/2)))**B
-            fator_tamanho = st.selectbox('Selecione o valor do Fator de Tamanho Ks',
-            [1.00,1.25,1.50])
-            espessura_borda = st.number_input('Forneça a espessura da borda (tR), caso existente')
+        passo_diametral = st.number_input('Insira o valor do passo diametral:',step=.1)
+        engrenagens[0] = st.number_input('Determine o número de dentes da engrenagem 0',format=='%i',step=1)
+        if numero_estagios!= 0:
+            for i in range(2,int(numero_engrenagens),2):
+                engrenagens[i] = engrenagens[0]                    
+            for i in range(1,int(numero_engrenagens),2):
+                engrenagens[i] = engrenagens[0]*razao_engrenamento
+        st.write("razao engrenamento",razao_engrenamento)
+        st.write("dentes engrenagens",engrenagens)
+    if passo_diametral !=0 and numero_estagios !=0 and razao_engrenamento !=0 and engrenagens[0] !=0:
+        larg_face = st.number_input('Insira o valor da largura de face',step=.001,format='%.3f') 
+        diametros_ref = {}
+        for i in range (0,int(numero_engrenagens)):
+            diametros_ref[i] = engrenagens[i]/passo_diametral 
+        st.write("diametros ref",diametros_ref)
+        velocidades = {}
+        velocidades_linha_ref = {}
+        velocidades[0] = st.number_input('Velocidade angular do pinhão em RPM',step=.5)
+        fator_aplicacao = st.selectbox('Selecione o Fator de Aplicação KA',
+        [1.00,1.25,1.5,1.75,2.00,2.25])
+        fator_distribuicao = st.selectbox('Selecione o Fator de Distribuição de Carga KM',
+        [1.6,1.7,1.8,2.0])
+        indice_qualidade = st.number_input('Insira o valor do índice de qualidade Qv',step=.1)
+        fator_tamanho = st.selectbox('Selecione o valor do Fator de Tamanho Ks',[1.00,1.25,1.50])
+        espessura_borda = st.number_input('Forneça a espessura da borda (tR), caso existente')
+        for i in range(2,int(numero_engrenagens)-1,2):
+            velocidades[i] = velocidades[i-2]
+        for i in range(1,int(numero_engrenagens),2):
+            velocidades[i] = (engrenagens[i-1]/engrenagens[i])*velocidades[i-1]
+        st.write("velocidades angulares",velocidades)
+        for i in range(0,int(numero_engrenagens)):
+            velocidades_linha_ref[i] = velocidades[i]*diametros_ref[i]
+        st.write("velocidades linha ref",velocidades_linha_ref)
+        B = ((12-indice_qualidade)**(2/3))/4
+        A = 50+56*(1-B)
+        fator_dinamico = {}
+        for i in range(0,int(numero_engrenagens)):
+            fator_dinamico[i] = (A/(A+velocidades_linha_ref[i]**(1/2)))**B
+        st.write("Fatores dinâmicos",fator_dinamico)
         if espessura_borda > 0:
             profundidade_dente = st.number_input('Forneça a Profundidade do dente')
             try:
@@ -344,30 +336,23 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
         else:
             fator_borda = 1
         fator_ciclocarga = 1
-        colu1,colu2 = st.columns(2)
-        with colu1:
-            fator_geometria_flexao_pinhao_1 = st.number_input('Determine o fator de flexão do Pinhão 1 (J)')
-            fator_geometria_flexao_pinhao_2 = st.number_input('Determine o fator de flexão do Pinhao 2 (J)')
-        with colu2:
-            fator_geometria_flexao_movida_1 = st.number_input('Determine o fator de flexão da Engrenagem Movida 1 (J)')
-            fator_geometria_flexao_movida_2 = st.number_input('Determine o fator de flexão da Engrenagem Movida 2 (J)')
+        fator_geometria = {}
+        fator_geometria[0] = st.number_input('Insira o fator de geometria do Pinhão')
+        fator_geometria[1] = st.number_input('Insira o fator de geometria da engrenagem')
+        for i in range(2,int(numero_engrenagens)-1,2):
+            fator_geometria[i] = fator_geometria[0]
+        for i in range(3,int(numero_engrenagens),2):
+            fator_geometria[i] = fator_geometria[1]
+        st.write("fatores_geometria",fator_geometria)
         carga_axial = st.number_input('Forneça a Carga Aplicada',step=.1)
-        if (carga_axial !=0) and (fator_geometria_flexao_pinhao_1 != 0) and (fator_geometria_flexao_pinhao_2 != 0) and (fator_geometria_flexao_movida_1 != 0 and fator_geometria_flexao_movida_2) :
+        if (carga_axial !=0) :
             spinner()  
-            tensao_flexao_pinhao_1 = carga_axial*passo_diametral_1*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face_1*fator_geometria_flexao_pinhao_1*fator_dinamico_1)
-            tensao_flexao_movida_1 = carga_axial*passo_diametral_1*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face_1*fator_geometria_flexao_movida_1*fator_dinamico_1)
-            tensao_flexao_pinhao_2 = carga_axial*passo_diametral_2*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face_2*fator_geometria_flexao_pinhao_2*fator_dinamico_2) 
-            tensao_flexao_movida_2 = carga_axial*passo_diametral_2*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face_2*fator_geometria_flexao_movida_2*fator_dinamico_2)
+            tensao_flexao = {}
+            for i in range(0,int(numero_engrenagens)-1):
+                tensao_flexao[i] = carga_axial*passo_diametral*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face*fator_geometria[i]*fator_dinamico[i])
             st.latex(r'''
             \sigma = \frac{W_t K_a K_m K_s K_B K_t}{FmJK_v}
             ''')
-            c1,c2 = st.columns(2)
-            with c1:
-                st.metric('Tensão de Flexão no Pinhão 1', round(tensao_flexao_pinhao_1,2))
-                st.metric('Tensão de Flexão na Engrenagem Movida 1',round(tensao_flexao_movida_1,2))
-            with c2:    
-                st.metric('Tensão de Flexão no Pinhão 2',round(tensao_flexao_pinhao_2,2))    
-                st.metric('Tensão de Flexão na Engrenagem Movida 2',round(tensao_flexao_movida_2,2))
             st.text('Calculo do Coeficiente Elástico')
             st.latex(r'''
                         C_p = \sqrt{\frac{1}{pi[(\frac{1-v_g²}{E_p}+\frac{(1-v_g²)}{E_g})]}}
@@ -382,27 +367,15 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
             if poisson_eng !=0 and poisson_pinhao !=0 and mod_elast_eng != 0 and mod_elast_pinhao !=0 :
                 coef_elastico =  (1/(pi*(((1-poisson_pinhao**2)/(mod_elast_pinhao*10**6))+((1-poisson_eng**2)/(mod_elast_eng*10**6)))))**(1/2)
                 st.metric('Cp = ',coef_elastico)
-                raio_pinhao_1 = diametro_ref_pinhao_1/2
-                raio_pinhao_2 = diametro_ref_pinhao_2/2
-                raio_movida_1 = (dentes_movida_1/passo_diametral_1)/2
-                raio_movida_2 = (dentes_movida_2/passo_diametral_2)/2
                 fator_acab_superficial = 1
-                raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2 = calcula_fator_geometria_composto(tipo_engrenagem,raio_pinhao_1,passo_diametral_1,raio_movida_1,diametro_ref_pinhao_1,larg_face_1,raio_pinhao_2,passo_diametral_2,raio_movida_2,diametro_ref_pinhao_2,larg_face_2)
-                tensao_superficie_eng1 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face_1*fator_geom_sup_eng1*diametro_ref_pinhao_1*fator_dinamico_1))
-                tensao_superficie_eng2 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face_2*fator_geom_sup_eng2*raio_pinhao_2*2*fator_dinamico_2))
-                c1,c2 = st.columns(2)
+                raio_curvatura_pinhao,raio_curvatura_eng,fator_geom_sup = calcula_fator_geometria_composto(tipo_engrenagem,diametros_ref,passo_diametral,larg_face)
+                tensao_superficie = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup*diametros_ref[0]*fator_dinamico[0]))
                 resistencia_flexao, resistencia_superficial = calcula_resistencias()
-                with c1:
-                    st.metric("P1", raio_curvatura1_eng1)
-                    st.metric("P2", raio_curvatura2_eng1)
-                    st.metric('Ipi', fator_geom_sup_eng1)
-                    st.metric("Sigmacp", tensao_superficie_eng1)
-                with c2:
-                    st.metric("P1", raio_curvatura1_eng2)
-                    st.metric("P2", raio_curvatura2_eng2)
-                    st.metric('Iig', fator_geom_sup_eng2)
-                    st.metric('Sigmaci', tensao_superficie_eng2)
-                            
+                st.metric("P1", raio_curvatura_pinhao)
+                st.metric("P2", raio_curvatura_eng)
+                st.metric('Ipi', fator_geom_sup)
+                st.metric("Sigmacp", tensao_superficie)      
+                                           
 
 def main():
     tipo_engrenagem = st.sidebar.selectbox('Selecione o tipo de engrenagem',('Dentes Retos', 'Dentes Helicoidais'))
