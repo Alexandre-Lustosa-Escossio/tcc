@@ -398,10 +398,8 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
         for i in range(1,int(numero_engrenagens),2):
             velocidades[i] = velocidades[i-1]/razao_engrenamento
             velocidades[i+1] = velocidades[i]
-        st.write("velocidades angulares",velocidades)
         for i in range(0,int(numero_engrenagens)):
             velocidades_linha_ref[i] = velocidades[i]*2*pi*diametros_ref[i]/(60*2)
-        st.write("velocidades linha ref em In/S",velocidades_linha_ref)
         B = ((12-indice_qualidade)**(2/3))/4
         A = 50+56*(1-B)
         fator_dinamico = {}
@@ -409,9 +407,6 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
         for i in range(0,int(numero_engrenagens)):
             velocidades_linha_ref_ft[i] = velocidades_linha_ref[i]*5
             fator_dinamico[i] = (A/(A+velocidades_linha_ref_ft[i]**(1/2)))**B
-        st.write('Fator A',A)
-        st.write('Fator B',B)
-        st.write("Fatores dinâmicos",fator_dinamico)
         if espessura_borda > 0:
             profundidade_dente = st.number_input('Forneça a Profundidade do dente')
             try:
@@ -420,7 +415,6 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
                     fator_borda = -2*razao_recuo + 3.4
                 elif razao_recuo >1.2:
                     fator_borda = 1
-                st.write('Fator Borda',fator_borda)
             except:
                 pass
         else:
@@ -433,7 +427,6 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
             fator_geometria[i] = fator_geometria[0]
         for i in range(3,int(numero_engrenagens),2):
             fator_geometria[i] = fator_geometria[1]
-        st.write("fatores_geometria",fator_geometria)
         potencia = st.number_input('Forneça a Potencia Aplicada em Watts',step=.1)
         modulo = 25.4 * 10**-3 /passo_diametral
         carga_axial = {}
@@ -445,17 +438,6 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
             tensao_flexao = {}
             for i in range(0,int(numero_engrenagens)):
                 tensao_flexao[i] = carga_axial[i]*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_borda*fator_ciclocarga/(larg_face*modulo*fator_geometria[i]*fator_dinamico[i])
-            st.write("Carga em N",carga_axial)
-            st.write('Ka',fator_aplicacao)
-            st.write('Km',fator_distribuicao)
-            st.write('ks',fator_tamanho)
-            st.write('kb',fator_borda)
-            st.write('Ki',fator_ciclocarga)
-            st.write('Larg face',larg_face)
-            st.write('Modulo',modulo)
-            st.write('J',fator_geometria)
-            st.write('kv',fator_dinamico)
-            st.write('Tensão flexao',tensao_flexao)
             st.latex(r'''
             \sigma = \frac{W_t K_a K_m K_s K_b K_I}{FJK_v}
             ''')
@@ -479,7 +461,7 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
                     mod_elast_eng = mod_elast_eng*10**6
             if poisson_eng !=0 and poisson_pinhao !=0 and mod_elast_eng != 0 and mod_elast_pinhao !=0 :
                 coef_elastico =  (1/(pi*(((1-poisson_pinhao**2)/(mod_elast_pinhao))+((1-poisson_eng**2)/(mod_elast_eng)))))**(1/2)
-                st.metric('Cp = ',coef_elastico)
+                st.metric('Cp = ',round(coef_elastico,3))
                 fator_acab_superficial = 1
                 raio_curvatura_pinhao,raio_curvatura_eng,fator_geom_sup = calcula_fator_geometria(tipo_engrenagem=tipo_engrenagem,tipo_engrenamento=tipo_engrenamento,diametros_ref=diametros_ref,passo_diametral = passo_diametral,larg_face = larg_face)
                 tensao_superficie = {}
@@ -490,29 +472,10 @@ def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
                     tensao_superficie[i] = tensao_superficie[i]*6894.76
                 for i in range(1,int(numero_engrenagens),2):
                     tensao_superficie[i] = tensao_superficie[i-1]
-
-                st.write('Carga Axial em Lb',carga_axial[i])
-                st.write('Fator aplicação',fator_aplicacao)
-                st.write('Fator distribuição',fator_distribuicao)
-                st.write('Fator tamanho',fator_tamanho)
-                st.write('Fator Acabamento Superficial',fator_acab_superficial)
-                st.write('Largura de Face em In',larg_face)
-                st.write('Fator Geom de Superficie',fator_geom_sup)
-                st.write('Diametro Ref em In',diametros_ref[i])
-                st.write('Fator dinâmico',fator_dinamico[i])
-
-                st.write('Tensão de Superfície em MPA', tensao_superficie)
-                st.write('Cp', coef_elastico)
-                st.write('Cálculo das Resistências')
-                st.metric("P1", raio_curvatura_pinhao)
-                st.metric("P2", raio_curvatura_eng)
-                st.metric('Ipi', fator_geom_sup)
                 for i in range(int(numero_engrenagens-1)):
                     st.metric("Sigmacp", tensao_superficie[i])  
                 calcula_resistencias(tensao_flexao,tensao_superficie,tipo_engrenamento=tipo_engrenamento,num_engrenagens=numero_engrenagens)
-                    
-                                           
-
+                
 def main():
     tipo_engrenagem = st.sidebar.selectbox('Selecione o tipo de engrenagem',('Dentes Retos', 'Dentes Helicoidais'))
     tipo_engrenamento = st.sidebar.selectbox('Selecione o tipo de engrenamento',('Trem Simples','Trem Composto'))
