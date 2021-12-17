@@ -100,23 +100,17 @@ def calcula_resistencias(tensao_flexao_pinhao, tensao_superficie_eng1, tensao_su
             resistencia_superficial_teorica = st.number_input('Forneça a resistência à fadiga superficial teórica')
         with coluna2:
             unidade_resistencia_flexao = st.radio('',('Psi','Mpa'),key=0) 
-        if unidade_resistencia_flexao == 'Mpa':
-            resistencia_flexao_teorica = resistencia_flexao_teorica* 0.000145038 * 10**6
-            resistencia_superficial_teorica = resistencia_superficial_teorica * 0.000145038 * 10**6
         fator_cl = st.number_input('Forneça o fator de vida de superfície Cl',step=1e-4,format='%.4f')
         fator_ch = 1
         resistencia_flexao = (resistencia_flexao_teorica*fator_kl)/(fator_kr*fator_kt)
         resistencia_superficial = (resistencia_superficial_teorica*fator_cl*fator_ch)/(fator_kt*fator_kr)
         if resistencia_superficial != 0:
-            if unidade_resistencia_flexao == 'Mpa':
-                resistencia_flexao = resistencia_flexao * 6894.76 * 10**-6
-                resistencia_superficial = resistencia_superficial* 6894.76 * 10**-6
             fator_seguranca_flexao_pinhao = resistencia_flexao/tensao_flexao_pinhao
             fator_seguranca_flexao_interm = resistencia_flexao/tensao_flexao_interm
             fator_seguranca_flexao_eng = resistencia_flexao/tensao_flexao_eng
             fator_seguranca_superficie_eng1 = (resistencia_superficial/tensao_superficie_eng1)**2
             fator_seguranca_superficie_eng2 = (resistencia_superficial/tensao_superficie_eng2)**2
-        return resistencia_flexao,resistencia_superficial,fator_seguranca_flexao_pinhao,fator_seguranca_flexao_interm,fator_seguranca_flexao_eng,fator_seguranca_superficie_eng1,fator_seguranca_superficie_eng2
+            return resistencia_flexao,resistencia_superficial,fator_seguranca_flexao_pinhao,fator_seguranca_flexao_interm,fator_seguranca_flexao_eng,fator_seguranca_superficie_eng1,fator_seguranca_superficie_eng2, unidade_resistencia_flexao
 
     else:
         fator_kl = {}
@@ -312,7 +306,7 @@ def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
             with c2:    
                 st.metric('Tensão de Flexão na Intermediária',round(tensao_flexao_interm,2),unidade_tensao_flexao)
             with c3:
-                st.metric('Tensão de Flexão na Engrenagem',round(tensao_flexao_eng,2),)    
+                st.metric('Tensão de Flexão na Engrenagem',round(tensao_flexao_eng,2),unidade_tensao_flexao)    
             st.text('Calculo do Coeficiente Elástico')
             st.latex(r'''
                         C_p = \sqrt{\frac{1}{pi[(\frac{1-v_g²}{E_p}+\frac{(1-v_g²)}{E_g})]}}
@@ -336,35 +330,41 @@ def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
                 raio_interm = (dentes_interm/passo_diametral)/2
                 raio_eng = (dentes_eng/passo_diametral)/2
                 fator_acab_superficial = 1
-                if fator_acab_superficial == 1:
-                    raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2 = calcula_fator_geometria(tipo_engrenagem,tipo_engrenamento,raio_pinhao=raio_pinhao,passo_diametral=passo_diametral,raio_interm=raio_interm,raio_eng=raio_eng,diametro_ref_pinhao=diametro_ref_pinhao,larg_face=larg_face)
-                    tensao_superficie_eng1 = 0
-                    tensao_superficie_eng1 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng1*diametro_ref_pinhao*fator_dinamico))
-                    tensao_superficie_eng2 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng2*raio_interm*2*fator_dinamico))
-                    resist_flexao_corrigida,resist_superficial_corrigida,nb_pinhao,nb_interm,nb_eng,ns_1,ns_2=calcula_resistencias(tensao_flexao_pinhao, tensao_flexao_interm=tensao_flexao_interm, tensao_flexao_eng=tensao_flexao_eng ,tensao_superficie_eng1=tensao_superficie_eng1, tensao_superficie_eng2=tensao_superficie_eng2)
-                    if raio_curvatura1_eng1 != 0:
-                        c1,c2 = st.columns(2)
-                        with c1:
-                            st.metric("P1 Engrenamento Pinhão-Intermediária", round(raio_curvatura1_eng1,4))
-                            st.metric("P2 Engrenamento Pinhão-Intermediária", round(raio_curvatura2_eng1,4))
-                            st.metric('Fator I Engrenamento Pinhão-Intermediária', round(fator_geom_sup_eng1,4))
-                            st.metric("Tensão de Superfície Pinhão-Intermediária", round(tensao_superficie_eng1,4))
-                        with c2:
-                            st.metric("P1 Engrenamento Intermediária-Engrenagem", round(raio_curvatura1_eng2,4))
-                            st.metric("P2 Engrenamento Intermediária-Engrenagem", round(raio_curvatura2_eng2,4))
-                            st.metric('Fator I Engrenamento Intermediária-Engrenagem', round(fator_geom_sup_eng2,4))
-                            st.metric('Tensão de Superfície Intermediária-Engrenagem', round(tensao_superficie_eng2,4))
-                    col1,col2 = st.columns(2)
-                    if resist_flexao_corrigida != 0:
-                        with col1: 
-                            st.metric('Resistência à Fadiga de Flexão corrigida',round(resist_flexao_corrigida,4))
-                            st.metric("Fator de Segurança de Flexão do Pinhão", round(nb_pinhao,2) )
-                            st.metric("Fator de Segurança de Flexão da Intermediária", round(nb_interm,2) )
-                            st.metric('Fator de Segurança de Flexão da Engrenagem', round(nb_eng,2) )
-                        with col2:
-                            st.metric('Resistência à Fadiga Superfícial corrigida', round(resist_superficial_corrigida,4))
-                            st.metric("Fator de Segurança de Superfície do 1º Engrenamento", round(ns_1,2))
-                            st.metric("Fator de Segurança de Superfície do 2º Engrenamento", round(ns_2,2))
+                try:
+                    if fator_acab_superficial == 1:
+                        raio_curvatura1_eng1,raio_curvatura1_eng2,raio_curvatura2_eng1,raio_curvatura2_eng2,fator_geom_sup_eng1,fator_geom_sup_eng2 = calcula_fator_geometria(tipo_engrenagem,tipo_engrenamento,raio_pinhao=raio_pinhao,passo_diametral=passo_diametral,raio_interm=raio_interm,raio_eng=raio_eng,diametro_ref_pinhao=diametro_ref_pinhao,larg_face=larg_face)
+                        tensao_superficie_eng1 = 0
+                        tensao_superficie_eng1 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng1*diametro_ref_pinhao*fator_dinamico))
+                        tensao_superficie_eng2 = coef_elastico*sqrt((carga_axial*fator_aplicacao*fator_distribuicao*fator_tamanho*fator_acab_superficial)/(larg_face*fator_geom_sup_eng2*raio_interm*2*fator_dinamico))
+                        resist_flexao_corrigida,resist_superficial_corrigida,nb_pinhao,nb_interm,nb_eng,ns_1,ns_2,unidade_resistencia_flexao=calcula_resistencias(tensao_flexao_pinhao, tensao_flexao_interm=tensao_flexao_interm, tensao_flexao_eng=tensao_flexao_eng ,tensao_superficie_eng1=tensao_superficie_eng1, tensao_superficie_eng2=tensao_superficie_eng2)
+                        if raio_curvatura1_eng1 != 0:
+                            if unidade_resistencia_flexao == 'Mpa':
+                                tensao_superficie_eng1 = tensao_superficie_eng1 * 6894.76 
+                                tensao_superficie_eng2 = tensao_superficie_eng2 * 6894.76 
+                            c1,c2 = st.columns(2)
+                            with c1:
+                                st.metric("P1 Engrenamento Pinhão-Intermediária", round(raio_curvatura1_eng1,4))
+                                st.metric("P2 Engrenamento Pinhão-Intermediária", round(raio_curvatura2_eng1,4))
+                                st.metric('Fator I Engrenamento Pinhão-Intermediária', round(fator_geom_sup_eng1,4))
+                                st.metric("Tensão de Superfície Pinhão-Intermediária", round(tensao_superficie_eng1,4),unidade_resistencia_flexao)
+                            with c2:
+                                st.metric("P1 Engrenamento Intermediária-Engrenagem", round(raio_curvatura1_eng2,4))
+                                st.metric("P2 Engrenamento Intermediária-Engrenagem", round(raio_curvatura2_eng2,4))
+                                st.metric('Fator I Engrenamento Intermediária-Engrenagem', round(fator_geom_sup_eng2,4))
+                                st.metric('Tensão de Superfície Intermediária-Engrenagem', round(tensao_superficie_eng2,4),unidade_resistencia_flexao)
+                        col1,col2 = st.columns(2)
+                        if resist_flexao_corrigida != 0:
+                            with col1: 
+                                st.metric('Resistência à Fadiga de Flexão corrigida',round(resist_flexao_corrigida,4),unidade_resistencia_flexao)
+                                st.metric("Fator de Segurança de Flexão do Pinhão", round(nb_pinhao,2) )
+                                st.metric("Fator de Segurança de Flexão da Intermediária", round(nb_interm,2) )
+                                st.metric('Fator de Segurança de Flexão da Engrenagem', round(nb_eng,2) )
+                            with col2:
+                                st.metric('Resistência à Fadiga Superfícial corrigida', round(resist_superficial_corrigida,4),unidade_resistencia_flexao)
+                                st.metric("Fator de Segurança de Superfície do 1º Engrenamento", round(ns_1,2))
+                                st.metric("Fator de Segurança de Superfície do 2º Engrenamento", round(ns_2,2))
+                except:
+                    pass
 def calcula_esforcos_composto(tipo_engrenagem,tipo_engrenamento):
     st.markdown("<h1 text-align:center;>Calculo das tensões de um trem de engrenagens</h1>",True)        
     c1,c2,c3 = st.columns([1,1,1])
