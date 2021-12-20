@@ -264,10 +264,10 @@ def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
                     fator_borda = -2*razao_recuo + 3.4
                 elif razao_recuo >1.2:
                     fator_borda = 1
+                else:
+                    fator_borda = 1
             except:
-                pass
-        else:
-            fator_borda = 1
+                fator_borda = 1        
         fator_ciclocarga = 1
         fator_ciclocarga_interm = 1.42
         colu1,colu2,colu3 = st.columns(3)
