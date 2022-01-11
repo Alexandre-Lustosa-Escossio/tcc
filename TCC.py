@@ -267,7 +267,9 @@ def calcula_esforcos_simples(tipo_engrenagem,tipo_engrenamento):
                 else:
                     fator_borda = 1
             except:
-                fator_borda = 1        
+                fator_borda = 1 
+        else:
+            fator_borda = 1       
         fator_ciclocarga = 1
         fator_ciclocarga_interm = 1.42
         colu1,colu2,colu3 = st.columns(3)
